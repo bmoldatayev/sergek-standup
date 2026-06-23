@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Процессный офис · Трекер задач</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root{
+  --navy:#0D2B4E;--accent:#2E7CF6;--accent-light:#EBF3FF;
+  --green:#16A34A;--green-light:#DCFCE7;--yellow:#D97706;--yellow-light:#FEF3C7;
+  --red:#DC2626;--red-light:#FEE2E2;
+  --gray-50:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;
+  --gray-400:#94A3B8;--gray-600:#475569;--gray-800:#1E293B;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--gray-800);font-size:14px;line-height:1.5;}
+
+/* HEADER */
+.hdr{background:var(--navy);color:white;height:56px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-md);}
+.hdr-left{display:flex;align-items:center;gap:10px;}
+.dot{width:8px;height:8px;background:var(--accent);border-radius:50%;}
+.hdr h1{font-size:15px;font-weight:600;}
+.hdr-right{display:flex;align-items:center;gap:12px;}
+.hdr-date{font-size:12px;color:rgba(255,255,255,.5);}
+.user-info{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.85);}
+.uavatar{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.3);}
+.btn-login{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;}
+.btn-login:hover{background:rgba(255,255,255,.25);}
+.btn-logout{background:transparent;color:rgba(255,255,255,.6);border:none;font-size:12px;cursor:pointer;padding:4px 8px;}
+.ro-badge{background:var(--yellow-light);color:var(--yellow);font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;display:inline-block;margin-right:4px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* TABS */
+.tabs{background:white;border-bottom:1px solid var(--gray-200);padding:0 24px;display:flex;position:sticky;top:56px;z-index:90;overflow-x:auto;}
+.tab{padding:14px 18px;font-size:13px;font-weight:500;color:var(--gray-400);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.tab:hover{color:var(--gray-800);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tbadge{background:var(--gray-100);color:var(--gray-600);font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;}
+.tab.active .tbadge{background:var(--accent-light);color:var(--accent);}
+
+/* MAIN */
+.main{padding:20px 24px;max-width:1400px;margin:0 auto;}
+.view{display:none;}.view.active{display:block;}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.ttitle{font-size:16px;font-weight:600;color:var(--navy);flex:1;}
+.tsub{font-size:12px;color:var(--gray-400);font-weight:400;margin-left:6px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;}
+.btn-p{background:var(--accent);color:white;}.btn-p:hover{background:#1d6ce0;}
+.btn-g{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200);}.btn-g:hover{background:var(--gray-100);}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-d{background:var(--red-light);color:var(--red);border:none;}
+.btn-w{background:var(--yellow-light);color:var(--yellow);border:none;}
+
+/* TABLE */
+.twrap{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--gray-50);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);padding:10px 14px;text-align:left;border-bottom:1px solid var(--gray-200);white-space:nowrap;}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--gray-100);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--gray-50);}
+.tbl tr.done td{opacity:.5;}.tbl tr.done .ttask{text-decoration:line-through;}
+.ttask{font-weight:500;}.tsub2{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.sec-row td{background:var(--gray-50);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);padding:7px 14px;border-bottom:1px solid var(--gray-200);}
+.ractions{display:flex;gap:4px;}
+
+/* DIR TAG */
+.dtag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap;}
+.dtag.Проекты{background:#EDE9FE;color:#6D28D9;}
+.dtag.ITAI{background:#DBEAFE;color:#1D4ED8;}
+.dtag.Методология{background:#FCE7F3;color:#9D174D;}
+.dtag.SimBASE{background:#FEF3C7;color:#92400E;}
+
+/* STATUS */
+.ssel{border:1px solid var(--gray-200);background:white;font-size:12px;font-weight:500;cursor:pointer;outline:none;padding:4px 8px;border-radius:6px;font-family:inherit;}
+.ssel:disabled{opacity:.6;cursor:default;background:var(--gray-50);}
+
+/* SPEED */
+.sdots{display:flex;gap:3px;}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--gray-200);}
+.sdot.on{background:var(--accent);}
+
+/* OWNER CHIP */
+.ochip{background:var(--gray-100);color:var(--gray-600);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;cursor:pointer;margin-right:2px;display:inline-block;}
+.ochip:hover{background:var(--accent-light);color:var(--accent);}
+
+/* TRANSFER */
+.tbadge2{display:inline-flex;align-items:center;gap:3px;background:var(--red-light);color:var(--red);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;}
+
+/* STATS */
+.sbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.scard{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;flex:1;min-width:100px;}
+.snum{font-size:22px;font-weight:700;color:var(--navy);line-height:1;}
+.slabel{font-size:11px;color:var(--gray-400);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
+.scard.g .snum{color:var(--green);}.scard.y .snum{color:var(--yellow);}.scard.r .snum{color:var(--red);}
+
+/* PROGRESS */
+.pwrap{margin-bottom:14px;}
+.plabel{font-size:12px;color:var(--gray-400);margin-bottom:4px;display:flex;justify-content:space-between;}
+.pbar{height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;}
+.pfill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s;}
+
+/* NAV */
+.nav-row{display:flex;align-items:center;gap:8px;}
+.nav-lbl{font-size:13px;font-weight:600;color:var(--navy);background:var(--gray-100);padding:6px 14px;border-radius:var(--radius);min-width:130px;text-align:center;}
+.nav-btn{width:30px;height:30px;border-radius:var(--radius);border:1px solid var(--gray-200);background:white;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.nav-btn:hover{background:var(--gray-100);}
+
+/* FILTERS */
+.fbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.flbl{font-size:12px;color:var(--gray-400);}
+.fchip{padding:5px 12px;border-radius:20px;border:1px solid var(--gray-200);background:white;font-size:12px;cursor:pointer;transition:all .15s;}
+.fchip:hover{border-color:var(--accent);color:var(--accent);}
+.fchip.active{background:var(--accent);color:white;border-color:var(--accent);}
+
+/* ROLLOVER */
+.rvbanner{background:linear-gradient(135deg,#FEF3C7,#FEE2E2);border:1px solid #FCD34D;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rvtext{font-size:13px;font-weight:500;color:#92400E;}
+.rvtext span{color:var(--red);font-weight:700;}
+
+/* DEADLINE */
+.dlcell{font-size:12px;color:var(--gray-400);white-space:nowrap;}
+.dlcell.overdue{color:var(--red);font-weight:500;}
+.dlcell.soon{color:var(--yellow);font-weight:500;}
+
+/* TEAM */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.mcard{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;transition:box-shadow .15s;}
+.mcard:hover{box-shadow:var(--shadow-md);}
+.mcard.vacancy{border:2px dashed var(--gray-200);background:var(--gray-50);}
+.mavatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;margin-bottom:10px;cursor:pointer;transition:transform .15s;}
+.mavatar:hover{transform:scale(1.08);}
+.mname{font-weight:600;font-size:14px;cursor:pointer;}.mname:hover{color:var(--accent);}
+.mrole{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.mstats{margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100);font-size:12px;color:var(--gray-600);}
+.mstat{display:flex;justify-content:space-between;margin-top:4px;}
+.vlabel{font-size:11px;font-weight:600;background:var(--yellow-light);color:var(--yellow);padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:8px;}
+
+/* HISTORY */
+.hlist{display:flex;flex-direction:column;gap:8px;}
+.hitem{background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.hhead{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.hhead:hover{background:var(--gray-50);}
+.hdate{font-weight:600;font-size:13px;}.hmeta{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.hbody{display:none;border-top:1px solid var(--gray-100);}.hbody.open{display:block;}
+.htrow{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--gray-50);font-size:12px;}
+.htrow:last-child{border-bottom:none;}
+
+/* PROFILE */
+.pheader{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;padding:16px;background:var(--gray-50);border-radius:var(--radius);}
+.pavatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:white;flex-shrink:0;}
+.pname{font-size:18px;font-weight:700;color:var(--navy);}
+.prole{font-size:13px;color:var(--gray-400);margin-top:2px;}
+.pstats{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.pstat{background:white;border-radius:6px;padding:8px 12px;text-align:center;min-width:65px;box-shadow:var(--shadow);}
+.psnum{font-size:18px;font-weight:700;color:var(--navy);line-height:1;}
+.pslbl{font-size:10px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.pstat.g .psnum{color:var(--green);}.pstat.r .psnum{color:var(--red);}.pstat.y .psnum{color:var(--yellow);}
+.psection{margin-bottom:16px;}
+.psectitle{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:8px;}
+.ptrow{display:flex;align-items:center;gap:8px;padding:10px 12px;background:white;border-radius:6px;margin-bottom:4px;box-shadow:var(--shadow);}
+.ptname{flex:1;font-size:13px;font-weight:500;}
+.ptsub{font-size:11px;color:var(--gray-400);}
+.pbar2{height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;margin-top:8px;}
+.pfill2{height:100%;border-radius:3px;}
+.dhrow{padding:10px 12px;background:white;border-radius:6px;margin-bottom:4px;box-shadow:var(--shadow);}
+.dhdate{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;}
+.dhtasks{display:flex;flex-wrap:wrap;gap:4px;}
+.dchip{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;}
+
+
+
+/* SUBTASKS */
+.subtask-row td{background:#f8faff;border-left:3px solid var(--accent-light);}
+.subtask-row .ttask{font-size:13px;color:var(--gray-600);}
+.subtask-indent{display:flex;align-items:center;gap:6px;}
+.subtask-icon{font-size:10px;color:var(--gray-400);}
+.expand-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent);padding:2px 6px;border-radius:4px;}
+.expand-btn:hover{background:var(--accent-light);}
+/* CALENDAR */
+.cal-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.cal-toggle{display:flex;background:var(--gray-100);border-radius:var(--radius);padding:3px;}
+.cal-toggle-btn{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--gray-600);transition:all .15s;}
+.cal-toggle-btn.active{background:white;color:var(--navy);box-shadow:var(--shadow);}
+.cal-filter-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.cal-filter-lbl{font-size:12px;color:var(--gray-400);}
+.cal-person-chip{padding:4px 12px;border-radius:20px;border:1px solid var(--gray-200);background:white;font-size:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.cal-person-chip:hover{border-color:var(--accent);color:var(--accent);}
+.cal-person-chip.active{color:white;border-color:transparent;}
+.cal-person-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+/* Week view */
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px;}
+.cal-week-header{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:4px;}
+.cal-day-hdr{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);padding:4px;}
+.cal-day{background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;min-height:120px;transition:box-shadow .15s;}
+.cal-day:hover{box-shadow:var(--shadow-md);}
+.cal-day.today{border:2px solid var(--accent);}
+.cal-day.empty{background:var(--gray-50);box-shadow:none;}
+.cal-day-num{font-size:12px;font-weight:700;color:var(--gray-400);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.cal-day-num.today-num{color:var(--accent);}
+.cal-task-item{font-size:11px;padding:3px 6px;border-radius:4px;margin-bottom:3px;display:flex;align-items:center;gap:4px;line-height:1.3;}
+.cal-task-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-transfer-icon{font-size:10px;flex-shrink:0;color:var(--red);font-weight:700;}
+.cal-more{font-size:10px;color:var(--gray-400);margin-top:3px;cursor:pointer;}
+.cal-more:hover{color:var(--accent);}
+/* Month view */
+.cal-month{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-month-day{background:white;border-radius:6px;padding:6px 8px;min-height:80px;box-shadow:var(--shadow);}
+.cal-month-day.today{border:2px solid var(--accent);}
+.cal-month-day.other-month{background:var(--gray-50);box-shadow:none;}
+.cal-month-day-num{font-size:11px;font-weight:700;color:var(--gray-400);margin-bottom:4px;}
+.cal-month-day-num.today-num{color:var(--accent);}
+.cal-month-task{font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;gap:3px;line-height:1.3;}
+.cal-month-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* CHAIN */
+.chain-card{padding:12px 16px;border-radius:8px;margin-bottom:6px;}
+.chain-level{font-size:10px;font-weight:700;text-transform:uppercase;color:rgba(0,0,0,.4);margin-bottom:4px;}
+.chain-name{font-weight:600;font-size:13px;}
+.chain-sub{font-size:12px;color:var(--gray-600);margin-top:2px;}
+.chain-meta{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.chain-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:white;}
+
+/* MODAL */
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+.moverlay.open{display:flex;}
+.moverlay.scroll{align-items:flex-start;padding:24px;overflow-y:auto;}
+.mpanel{background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:24px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.mpanel.wide{max-width:700px;}
+.mtitle{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.mclose{background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-400);line-height:1;}
+.fgrp{margin-bottom:13px;}
+.flabel{font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:5px;display:block;}
+.fctl{width:100%;border:1px solid var(--gray-200);border-radius:var(--radius);padding:8px 12px;font-size:13px;font-family:inherit;outline:none;transition:border .15s;}
+.fctl:focus{border-color:var(--accent);}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px;color:var(--gray-400);}
+.eicon{font-size:36px;margin-bottom:10px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;box-shadow:var(--shadow-md);z-index:300;transform:translateY(80px);opacity:0;transition:all .25s;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+@media(max-width:768px){.main{padding:12px;}.tbl th:nth-child(n+5),.tbl td:nth-child(n+5){display:none;}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left"><div class="dot"></div><h1>Процессный офис · Трекер задач</h1></div>
+  <div class="hdr-right">
+    <div class="hdr-date" id="hdrDate"></div>
+    <div id="authArea"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchView('master')">🗂 Мастер <span class="tbadge" id="bm">0</span></div>
+  <div class="tab" onclick="switchView('week')">📅 Неделя <span class="tbadge" id="bw">0</span></div>
+  <div class="tab" onclick="switchView('day')">☀ День <span class="tbadge" id="bd">0</span></div>
+  <div class="tab" onclick="switchView('team')">👥 Команда <span class="tbadge" id="bt">0</span></div>
+  <div class="tab" onclick="switchView('history')">📋 История <span class="tbadge" id="bh">0</span></div>
+  <div class="tab" onclick="switchView('calendar')">📆 Календарь</div>
+  <div class="tab" onclick="switchView('reports')">📊 Отчёты</div>
+</div>
+
+<div class="main">
+  <!-- MASTER -->
+  <div class="view active" id="view-master">
+    <div class="toolbar">
+      <div class="ttitle">Мастер трекер <span class="tsub">— весь бэклог <span class="sync-dot"></span>онлайн</span></div>
+      <button class="btn btn-p eo" onclick="openAddModal('master')">+ Добавить задачу</button>
+    </div>
+    <div class="fbar" id="fmaster"></div>
+    <div class="twrap"><table class="tbl"><thead><tr>
+      <th style="width:110px">Направление</th><th>Задача</th><th>Детали</th>
+      <th>Отв.</th><th>Статус</th><th style="width:120px">Действия</th>
+    </tr></thead><tbody id="tbody-master"></tbody></table></div>
+  </div>
+
+  <!-- WEEK -->
+  <div class="view" id="view-week">
+    <div class="toolbar">
+      <div class="ttitle">Неделя <span class="tsub" id="wrange"></span></div>
+      <div class="nav-row">
+        <button class="nav-btn" onclick="changeWeek(-1)">&#8249;</button>
+        <div class="nav-lbl" id="wlabel"></div>
+        <button class="nav-btn" onclick="changeWeek(1)">&#8250;</button>
+      </div>
+      <button class="btn btn-p eo" onclick="openAddModal('week')">+ Задача</button>
+    </div>
+    <div class="fbar" id="fweek"></div>
+    <div class="sbar" id="wstats"></div>
+    <div class="pwrap" id="wprog"></div>
+    <div class="twrap"><table class="tbl"><thead><tr>
+      <th style="width:110px">Направление</th><th>Задача</th>
+      <th>Отв.</th><th style="width:70px">Скорость</th>
+      <th>Статус</th><th>Комментарий</th><th style="width:110px">Действия</th>
+    </tr></thead><tbody id="tbody-week"></tbody></table></div>
+  </div>
+
+  <!-- DAY -->
+  <div class="view" id="view-day">
+    <div class="toolbar">
+      <div class="ttitle">Daily Standup <span class="tsub">— задачи дня</span></div>
+      <div class="nav-row">
+        <button class="nav-btn" onclick="changeDay(-1)">&#8249;</button>
+        <div class="nav-lbl" id="dlabel"></div>
+        <button class="nav-btn" onclick="changeDay(1)">&#8250;</button>
+      </div>
+      <button class="btn btn-p btn-sm eo" onclick="openAddModal('day')">+ Задача</button>
+      <button class="btn btn-g btn-sm eo" onclick="openFromWeek()">&#8592; Из недели</button>
+    </div>
+    <div id="rvbanner"></div>
+    <div class="fbar" id="fday"></div>
+    <div class="sbar" id="dstats"></div>
+    <div class="pwrap" id="dprog"></div>
+    <div class="twrap"><table class="tbl"><thead><tr>
+      <th style="width:110px">Направление</th><th>Задача</th><th>Что делаем</th>
+      <th>Отв.</th><th style="width:70px">Ск.</th><th>Статус</th>
+      <th style="width:75px">Переносов</th><th>Дедлайн</th><th style="width:80px">Действия</th>
+    </tr></thead><tbody id="tbody-day"></tbody></table></div>
+  </div>
+
+  <!-- TEAM -->
+  <div class="view" id="view-team">
+    <div class="toolbar">
+      <div class="ttitle">Команда <span class="tsub">— сотрудники и вакансии</span></div>
+      <button class="btn btn-p eo" onclick="openTeamModal()">+ Добавить</button>
+    </div>
+    <div class="tgrid" id="team-grid"></div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="view" id="view-calendar">
+    <div class="cal-toolbar">
+      <div class="ttitle" style="flex:none">Календарь</div>
+      <div class="cal-toggle">
+        <button class="cal-toggle-btn active" id="calBtnWeek" onclick="setCalView('week')">Неделя</button>
+        <button class="cal-toggle-btn" id="calBtnMonth" onclick="setCalView('month')">Месяц</button>
+      </div>
+      <div class="nav-row">
+        <button class="nav-btn" onclick="calNav(-1)">&#8249;</button>
+        <div class="nav-lbl" id="calLabel"></div>
+        <button class="nav-btn" onclick="calNav(1)">&#8250;</button>
+      </div>
+      <div class="cal-filter-chips">
+        <span class="cal-filter-lbl">Сотрудник:</span>
+        <div id="calPersonFilters"></div>
+      </div>
+    </div>
+    <div id="calContainer"></div>
+  </div>
+
+
+  <!-- REPORTS -->
+  <div class="view" id="view-reports">
+    <div class="toolbar">
+      <div class="ttitle">Отчёты <span class="tsub">— генерация презентаций</span></div>
+    </div>
+
+    <!-- Report cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <!-- 2-week report -->
+      <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:24px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:44px;height:44px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px">📊</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;color:var(--navy)">2-недельный статус</div>
+            <div style="font-size:12px;color:var(--gray-400)">Для куратора/CEO · каждые 2 недели в четверг</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-600);margin-bottom:16px;line-height:1.6">
+          Презентация PowerPoint с титульным слайдом, слайдами по каждому проекту и ближайшими шагами. AI перефразирует задачи в профессиональный текст.
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:5px">Период</label>
+          <div style="display:flex;gap:8px">
+            <input type="date" id="rpt2w-from" class="fctl" style="flex:1"/>
+            <span style="line-height:36px;color:var(--gray-400)">—</span>
+            <input type="date" id="rpt2w-to" class="fctl" style="flex:1"/>
+          </div>
+        </div>
+        <button class="btn btn-p" style="width:100%" onclick="openReportBuilder('biweekly')">Открыть конструктор →</button>
+      </div>
+
+      <!-- Weekly report -->
+      <div style="background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:24px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="width:44px;height:44px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px">📝</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;color:var(--navy)">Еженедельный отчёт</div>
+            <div style="font-size:12px;color:var(--gray-400)">Что сделано за неделю · каждую пятницу</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-600);margin-bottom:16px;line-height:1.6">
+          Текстовый список выполненного за неделю по направлениям. Можно скопировать в слайд или отправить как есть.
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:5px">Неделя</label>
+          <div class="nav-row">
+            <button class="nav-btn" onclick="changeRptWeek(-1)">&#8249;</button>
+            <div class="nav-lbl" id="rptWeekLabel" style="flex:1;text-align:center"></div>
+            <button class="nav-btn" onclick="changeRptWeek(1)">&#8250;</button>
+          </div>
+        </div>
+        <button class="btn btn-p" style="width:100%;background:var(--green)" onclick="openReportBuilder('weekly')">Открыть конструктор →</button>
+      </div>
+    </div>
+  </div>
+  <!-- HISTORY -->
+  <div class="view" id="view-history">
+    <div class="toolbar"><div class="ttitle">История стендапов</div></div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- MODAL: TASK -->
+<div class="moverlay" id="mTask">
+  <div class="mpanel">
+    <div class="mtitle"><span id="mTaskTitle">Добавить задачу</span><button class="mclose" onclick="closeM('mTask')">&#215;</button></div>
+    <div class="fgrp"><label class="flabel">Направление</label>
+      <select class="fctl" id="fDir"><option>Проекты</option><option>IT|AI</option><option>Методология</option><option>SimBASE</option></select></div>
+    <div class="fgrp"><label class="flabel">Основная задача</label><input class="fctl" id="fMain" placeholder="Название задачи"/></div>
+    <div class="fgrp"><label class="flabel">Что конкретно делаем</label><input class="fctl" id="fDetail" placeholder="Подзадача или шаг"/></div>
+    <div class="fgrp"><label class="flabel">Ответственный</label><select class="fctl" id="fOwner"><option value="">— выбрать —</option></select></div>
+    <div class="fgrp"><label class="flabel">Скорость (1=быстро, 5=долго)</label>
+      <select class="fctl" id="fSpeed"><option value="1">1 — быстрее часа</option><option value="2">2 — полдня</option><option value="3" selected>3 — день</option><option value="4">4 — несколько дней</option><option value="5">5 — неделя+</option></select></div>
+    <div class="fgrp" id="fDeadlineGrp"><label class="flabel">Дедлайн</label><input class="fctl" id="fDeadline" type="date"/></div>
+    <div class="fgrp" id="fParentGrp"><label class="flabel">🔗 Привязать к <span id="fParentLbl"></span></label><select class="fctl" id="fParent"><option value="">— без привязки —</option></select></div>
+    <div class="fgrp"><label class="flabel">Комментарий</label><input class="fctl" id="fComment" placeholder="Результат, уточнение..."/></div>
+    <div class="mfoot"><button class="btn btn-g" onclick="closeM('mTask')">Отмена</button><button class="btn btn-p" onclick="saveTask()">Сохранить</button></div>
+  </div>
+</div>
+
+
+<!-- MODAL: SUBTASK -->
+<div class="moverlay" id="mSubtask">
+  <div class="mpanel">
+    <div class="mtitle"><span id="mSubtaskTitle">+ Подзадача</span><button class="mclose" onclick="closeM('mSubtask')">&#215;</button></div>
+    <div style="padding:10px 12px;background:var(--accent-light);border-radius:var(--radius);margin-bottom:16px;font-size:12px;color:var(--accent)">
+      <strong id="mSubtaskParentName"></strong>
+    </div>
+    <div class="fgrp"><label class="flabel">Название подзадачи</label><input class="fctl" id="stMain" placeholder="Что конкретно нужно сделать"/></div>
+    <div class="fgrp"><label class="flabel">Детали</label><input class="fctl" id="stDetail" placeholder="Уточнение..."/></div>
+    <div class="fgrp"><label class="flabel">Ответственный</label><select class="fctl" id="stOwner"><option value="">— выбрать —</option></select></div>
+    <div class="fgrp"><label class="flabel">Скорость (1=быстро, 5=долго)</label>
+      <select class="fctl" id="stSpeed"><option value="1">1 — быстрее часа</option><option value="2">2 — полдня</option><option value="3" selected>3 — день</option><option value="4">4 — несколько дней</option><option value="5">5 — неделя+</option></select></div>
+    <div class="fgrp"><label class="flabel">Добавить сразу в</label>
+      <select class="fctl" id="stTarget">
+        <option value="master">Только в Мастер</option>
+        <option value="week">В Мастер + Неделя</option>
+        <option value="day">В Мастер + Неделя + День</option>
+      </select></div>
+    <div class="mfoot"><button class="btn btn-g" onclick="closeM('mSubtask')">Отмена</button><button class="btn btn-p" onclick="saveSubtask()">Создать</button></div>
+  </div>
+</div>
+<!-- MODAL: FROM WEEK -->
+<div class="moverlay" id="mFromWeek">
+  <div class="mpanel">
+    <div class="mtitle"><span>Добавить из недельного плана</span><button class="mclose" onclick="closeM('mFromWeek')">&#215;</button></div>
+    <div id="fromWeekList"></div>
+    <div class="mfoot"><button class="btn btn-g" onclick="closeM('mFromWeek')">Отмена</button><button class="btn btn-p" onclick="confirmFromWeek()">Добавить выбранные</button></div>
+  </div>
+</div>
+
+<!-- MODAL: TEAM -->
+<div class="moverlay" id="mTeam">
+  <div class="mpanel">
+    <div class="mtitle"><span id="mTeamTitle">Добавить</span><button class="mclose" onclick="closeM('mTeam')">&#215;</button></div>
+    <div class="fgrp"><label class="flabel">Тип</label>
+      <select class="fctl" id="tmType" onchange="toggleVac()"><option value="active">Сотрудник</option><option value="vacancy">Вакансия</option></select></div>
+    <div id="tmNameGrp" class="fgrp"><label class="flabel">Имя</label><input class="fctl" id="tmName" placeholder="Мирас"/></div>
+    <div class="fgrp"><label class="flabel">Должность</label><input class="fctl" id="tmRole" placeholder="Специалист по процессам"/></div>
+    <div class="fgrp"><label class="flabel">Цвет</label>
+      <select class="fctl" id="tmColor"><option value="#2E7CF6">Синий</option><option value="#16A34A">Зелёный</option><option value="#7C3AED">Фиолетовый</option><option value="#D97706">Жёлтый</option><option value="#DC2626">Красный</option><option value="#0D2B4E">Тёмно-синий</option></select></div>
+    <div class="mfoot"><button class="btn btn-g" onclick="closeM('mTeam')">Отмена</button><button class="btn btn-p" onclick="saveMember()">Сохранить</button></div>
+  </div>
+</div>
+
+
+<!-- MODAL: REPORT BUILDER -->
+<div class="moverlay" id="mReportBuilder" style="align-items:flex-start;padding:20px;overflow-y:auto;">
+  <div class="mpanel" style="max-width:800px;width:100%;margin:auto;max-height:none;">
+    <div class="mtitle">
+      <span id="builderTitle">Конструктор отчёта</span>
+      <button class="mclose" onclick="closeM('mReportBuilder')">&#215;</button>
+    </div>
+
+    <!-- Step 1: Select tasks -->
+    <div id="builderStep1">
+      <div style="font-size:13px;color:var(--gray-600);margin-bottom:16px">
+        Выбери что включить в презентацию. Галки = попадёт на слайд.
+      </div>
+      <div id="builderTaskList"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-g" onclick="closeM('mReportBuilder')">Отмена</button>
+        <button class="btn btn-p" id="builderGenBtn" onclick="generateReport()">
+          ✨ Сгенерировать через AI
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Preview & edit -->
+    <div id="builderStep2" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px;background:var(--accent-light);border-radius:var(--radius)">
+        <span style="font-size:20px">✨</span>
+        <div style="font-size:13px;color:var(--accent)">AI сгенерировал текст. Можешь отредактировать перед скачиванием.</div>
+      </div>
+      <div id="builderPreview"></div>
+      <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-g" onclick="backToStep1()">← Изменить выбор</button>
+        <button class="btn btn-p" id="downloadBtn" onclick="downloadReport()">
+          ⬇ Скачать PPTX
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- MODAL: PROFILE -->
+<div class="moverlay scroll" id="mProfile">
+  <div class="mpanel wide">
+    <div class="mtitle"><span id="mProfileTitle">Профиль</span><button class="mclose" onclick="closeM('mProfile')">&#215;</button></div>
+    <div id="profileContent"></div>
+  </div>
+</div>
+
+<!-- MODAL: CHAIN -->
+<div class="moverlay" id="mChain">
+  <div class="mpanel">
+    <div class="mtitle"><span>🔗 Цепочка задачи</span><button class="mclose" onclick="closeM('mChain')">&#215;</button></div>
+    <div id="chainContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getFirestore,collection,doc,setDoc,updateDoc,deleteDoc,onSnapshot}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import{getAuth,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const FB={apiKey:"AIzaSyBoMbn728PYIu19XRW4vznlhMHD0af0qEg",authDomain:"sergek-tracker.firebaseapp.com",projectId:"sergek-tracker",storageBucket:"sergek-tracker.firebasestorage.app",messagingSenderId:"133904852598",appId:"1:133904852598:web:5a1a8b1d7d091d8bdda157"};
+const ADMIN="b.moldatayev@sergek.com";
+const app=initializeApp(FB);
+const db=getFirestore(app);
+const auth=getAuth(app);
+
+let isAdmin=false,dayOff=0,weekOff=0,mCtx='master',editTeamId=null;
+let AF={master:'all',week:'all',day:'all'};
+let C={master:[],week:[],day:{},team:[]};
+
+// ── AUTH ──
+window.loginGoogle=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){toast('Ошибка: '+e.message);}};
+window.logoutUser=async()=>{await signOut(auth);toast('Вы вышли');};
+
+onAuthStateChanged(auth,u=>{
+  if(u&&u.email===ADMIN){
+    isAdmin=true;
+    document.getElementById('authArea').innerHTML=`<div class="user-info"><img class="uavatar" src="${u.photoURL||''}" onerror="this.style.display='none'"><span>${u.displayName||u.email}</span><button class="btn-logout" onclick="logoutUser()">Выйти</button></div>`;
+  }else if(u){
+    isAdmin=false;
+    document.getElementById('authArea').innerHTML=`<div class="user-info"><span class="ro-badge">Только просмотр</span><button class="btn-logout" onclick="logoutUser()">Выйти</button></div>`;
+  }else{
+    isAdmin=false;
+    document.getElementById('authArea').innerHTML=`<button class="btn-login" onclick="loginGoogle()">Войти через Google</button>`;
+  }
+  updEO();renderAll();
+});
+
+function updEO(){document.querySelectorAll('.eo').forEach(e=>e.style.display=isAdmin?'':'none');}
+
+// ── FIRESTORE ──
+async function fsSet(col,id,data){await setDoc(doc(db,col,id),data);}
+async function fsUpd(col,id,data){try{await updateDoc(doc(db,col,id),data);}catch(e){await setDoc(doc(db,col,id),data);}}
+async function fsDel(col,id){await deleteDoc(doc(db,col,id));}
+
+function startListeners(){
+  onSnapshot(collection(db,'master'),s=>{C.master=s.docs.map(d=>({id:d.id,...d.data()}));renderMaster();renderTeam();});
+  onSnapshot(collection(db,'week'),s=>{C.week=s.docs.map(d=>({id:d.id,...d.data()}));renderWeek();});
+  onSnapshot(collection(db,'day'),s=>{
+    C.day={};
+    s.docs.forEach(d=>{const dt=d.data();if(!C.day[dt.dayKey])C.day[dt.dayKey]=[];C.day[dt.dayKey].push({id:d.id,...dt});});
+    renderDay();renderHistory();
+  });
+  onSnapshot(collection(db,'team'),s=>{C.team=s.docs.map(d=>({id:d.id,...d.data()}));renderTeam();document.getElementById('bt').textContent=C.team.length;});
+}
+
+// ── DATE ──
+function toKey(d){return d.toISOString().slice(0,10);}
+function todayK(){return toKey(new Date());}
+function curDayK(){const d=new Date();d.setDate(d.getDate()+dayOff);return toKey(d);}
+function wkKey(off){const d=new Date();const dy=d.getDay()||7;d.setDate(d.getDate()-dy+1+off*7);return toKey(d);}
+function wkRange(off){const d=new Date();const dy=d.getDay()||7;const m=new Date(d);m.setDate(d.getDate()-dy+1+off*7);const f=new Date(m);f.setDate(m.getDate()+4);const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});return fmt(m)+' – '+fmt(f);}
+function curWK(){return wkKey(weekOff);}
+function fmtD(k){return new Date(k+'T12:00:00').toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});}
+function dlCls(s){if(!s)return'';const t=new Date();t.setHours(0,0,0,0);const dl=new Date(s+'T00:00:00');const diff=Math.ceil((dl-t)/86400000);return diff<0?'overdue':diff<=2?'soon':'';}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+
+// ── HELPERS ──
+function dirTag(dir){const c=dir==='IT|AI'?'ITAI':dir;return`<span class="dtag ${c}">${dir}</span>`;}
+function speedDots(n){let h='<div class="sdots">';for(let i=1;i<=5;i++)h+=`<div class="sdot${i<=n?' on':''}"></div>`;return h+'</div>';}
+function ssel(id,cur,ctx){
+  const dis=isAdmin?'':'disabled';
+  let h=`<select class="ssel" ${dis} onchange="updateStatus('${ctx}','${id}',this.value)">`;
+  ['Не начато','В работе','Частично','Выполнено'].forEach(o=>h+=`<option${o===cur?' selected':''}>${o}</option>`);
+  return h+'</select>';
+}
+function ownerChips(owner){
+  if(!owner)return'';
+  return owner.split('/').map(n=>n.trim()).filter(Boolean)
+    .map(n=>`<span class="ochip" onclick="showProfile('${n}')">${n}</span>`).join('');
+}
+function sbg(s){return{'Выполнено':'var(--green-light)','В работе':'var(--yellow-light)','Частично':'#fef9c3','Не начато':'var(--gray-100)'}[s]||'var(--gray-100)';}
+function sfc(s){return{'Выполнено':'var(--green)','В работе':'var(--yellow)','Частично':'#854d0e','Не начато':'var(--gray-600)'}[s]||'var(--gray-600)';}
+function owners(){return C.team.filter(m=>m.type==='active').map(m=>m.name);}
+
+// ── FILTERS ──
+function buildF(id,ctx){
+  let h='<span class="flbl">Фильтр:</span>';
+  ['all',...owners()].forEach(o=>{const lbl=o==='all'?'Все':o;const ac=AF[ctx]===o?'active':'';h+=`<span class="fchip ${ac}" onclick="setF('${ctx}','${o}')">${lbl}</span>`;});
+  document.getElementById(id).innerHTML=h;
+}
+window.setF=(ctx,v)=>{AF[ctx]=v;renderAll();};
+function applyF(tasks,ctx){if(AF[ctx]==='all')return tasks;return tasks.filter(t=>t.owner===AF[ctx]||t.owner.includes(AF[ctx]));}
+
+// ── STATS ──
+function renderStats(tasks,sid,pid){
+  const total=tasks.length,done=tasks.filter(t=>t.status==='Выполнено').length;
+  const wip=tasks.filter(t=>t.status==='В работе'||t.status==='Частично').length;
+  const todo=tasks.filter(t=>t.status==='Не начато').length;
+  const trs=tasks.filter(t=>(t.transfers||0)>0).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById(sid).innerHTML=`<div class="scard"><div class="snum">${total}</div><div class="slabel">Всего</div></div><div class="scard g"><div class="snum">${done}</div><div class="slabel">Выполнено</div></div><div class="scard y"><div class="snum">${wip}</div><div class="slabel">В работе</div></div><div class="scard"><div class="snum">${todo}</div><div class="slabel">Не начато</div></div>${trs?`<div class="scard r"><div class="snum">${trs}</div><div class="slabel">Переносов</div></div>`:''}`;
+  document.getElementById(pid).innerHTML=`<div class="plabel"><span>Прогресс</span><span>${pct}%</span></div><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>`;
+}
+
+// ── MASTER ──
+function renderMaster(){
+  buildF('fmaster','master');
+  const tasks=applyF(C.master,'master');
+  document.getElementById('bm').textContent=C.master.length;
+  const tb=document.getElementById('tbody-master');
+  if(!tasks.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="eicon">🗂</div>Бэклог пуст</div></td></tr>`;return;}
+  const grps={};tasks.forEach(t=>{if(!grps[t.dir])grps[t.dir]=[];grps[t.dir].push(t);});
+  let h='';
+  Object.entries(grps).forEach(([dir,items])=>{
+    h+=`<tr class="sec-row"><td colspan="6">${dir}</td></tr>`;
+    items.forEach(t=>{
+      const subs = C.master.filter(x=>x.parentId===t.id);
+      const hasSubs = subs.length > 0;
+      const isExp = expandedMaster.has(t.id);
+      const expandBtn = hasSubs ? `<button class="expand-btn" onclick="toggleExpand('${t.id}')">${isExp?'▾':'▸'} ${subs.length}</button>` : '';
+      const eBtns=isAdmin
+        ?`<td><div class="ractions">${expandBtn}<button class="btn btn-g btn-sm" onclick="openSubtaskModal('${t.id}')" title="+ Подзадача">＋</button><button class="btn btn-g btn-sm" onclick="showChain('master','${t.id}')" title="Цепочка">🔗</button><button class="btn btn-g btn-sm" onclick="pushToWeek('${t.id}')" title="В неделю">📅</button><button class="btn btn-d btn-sm" onclick="delTask('master','${t.id}')">✕</button></div></td>`
+        :`<td><div class="ractions">${expandBtn}<button class="btn btn-g btn-sm" onclick="showChain('master','${t.id}')">🔗</button></div></td>`;
+      // Don't show tasks that are subtasks of other master tasks (they show under parent)
+      if(t.parentId && C.master.find(x=>x.id===t.parentId)) return;
+      h+=`<tr class="${t.status==='Выполнено'?'done':''}"><td>${dirTag(t.dir)}</td><td><div class="ttask">${t.main}</div>${t.detail?`<div class="tsub2">${t.detail}</div>`:''}</td><td class="tsub2">${t.comment||'—'}</td><td>${ownerChips(t.owner)}</td><td>${ssel(t.id,t.status,'master')}</td>${eBtns}</tr>`;
+      // Show subtasks if expanded
+      if(isExp && hasSubs){
+        subs.forEach(st=>{
+          const stBtns=isAdmin
+            ?`<td><div class="ractions"><button class="btn btn-g btn-sm" onclick="pushToWeek('${st.id}')" title="В неделю">📅</button><button class="btn btn-d btn-sm" onclick="delTask('master','${st.id}')">✕</button></div></td>`
+            :`<td></td>`;
+          h+=`<tr class="subtask-row ${st.status==='Выполнено'?'done':''}"><td></td><td><div class="subtask-indent"><span class="subtask-icon">└─</span><div><div class="ttask">${st.main}</div>${st.detail?`<div class="tsub2">${st.detail}</div>`:''}</div></div></td><td class="tsub2">${st.comment||'—'}</td><td>${ownerChips(st.owner)}</td><td>${ssel(st.id,st.status,'master')}</td>${stBtns}</tr>`;
+        });
+      }
+    });
+  });
+  tb.innerHTML=h;
+}
+
+// ── WEEK ──
+function renderWeek(){
+  const wk=wkKey(weekOff);
+  buildF('fweek','week');
+  const all=C.week.filter(t=>t.weekKey===wk);
+  const tasks=applyF(all,'week');
+  document.getElementById('wlabel').textContent=weekOff===0?'Текущая':weekOff>0?`+${weekOff} нед.`:`${weekOff} нед.`;
+  document.getElementById('wrange').textContent='— '+wkRange(weekOff);
+  document.getElementById('bw').textContent=all.length;
+  renderStats(all,'wstats','wprog');
+  const tb=document.getElementById('tbody-week');
+  if(!tasks.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="eicon">📅</div>Нет задач. Перенеси из Мастера (📅) или добавь вручную.</div></td></tr>`;return;}
+  let h='';
+  tasks.forEach(t=>{
+    const cmt=isAdmin
+      ?`<td><input style="border:none;background:transparent;font-size:12px;color:#475569;width:100%" value="${t.comment||''}" placeholder="Результат..." onblur="updComment(event,'week','${t.id}')"/></td>`
+      :`<td class="tsub2">${t.comment||'—'}</td>`;
+    const eBtns=isAdmin
+      ?`<td><div class="ractions"><button class="btn btn-g btn-sm" onclick="showChain('week','${t.id}')">🔗</button><button class="btn btn-g btn-sm" onclick="pushToDay('${t.id}')">☀</button><button class="btn btn-d btn-sm" onclick="delTask('week','${t.id}')">✕</button></div></td>`
+      :`<td><button class="btn btn-g btn-sm" onclick="showChain('week','${t.id}')">🔗</button></td>`;
+    h+=`<tr class="${t.status==='Выполнено'?'done':''}"><td>${dirTag(t.dir)}</td><td><div class="ttask">${t.main}</div>${t.detail?`<div class="tsub2">${t.detail}</div>`:''}</td><td>${ownerChips(t.owner)}</td><td>${speedDots(t.speed||3)}</td><td>${ssel(t.id,t.status,'week')}</td>${cmt}${eBtns}</tr>`;
+  });
+  tb.innerHTML=h;
+}
+
+// ── DAY ──
+function renderDay(){
+  const key=curDayK();
+  buildF('fday','day');
+  const all=C.day[key]||[];
+  const tasks=applyF(all,'day');
+  document.getElementById('dlabel').textContent=fmtD(key);
+  document.getElementById('bd').textContent=all.length;
+  renderStats(all,'dstats','dprog');
+  if(dayOff===0&&isAdmin)checkRollover();else document.getElementById('rvbanner').innerHTML='';
+  const tb=document.getElementById('tbody-day');
+  if(!tasks.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="eicon">☀</div>${isAdmin?'Нажми «Из недели» чтобы добавить задачи.':'Задачи на этот день не добавлены.'}</div></td></tr>`;return;}
+  let h='';
+  tasks.forEach(t=>{
+    const tr=t.transfers||0;
+    const eBtns=isAdmin
+      ?`<td><div class="ractions"><button class="btn btn-g btn-sm" onclick="showChain('day','${t.id}')">🔗</button><button class="btn btn-w btn-sm" onclick="rollOne('${t.id}')" title="На завтра">→</button><button class="btn btn-d btn-sm" onclick="delTask('day','${t.id}')">✕</button></div></td>`
+      :`<td><button class="btn btn-g btn-sm" onclick="showChain('day','${t.id}')">🔗</button></td>`;
+    h+=`<tr class="${t.status==='Выполнено'?'done':''}"><td>${dirTag(t.dir)}</td><td><div class="ttask">${t.main}</div></td><td class="tsub2">${t.detail||'—'}</td><td>${ownerChips(t.owner)}</td><td>${speedDots(t.speed||3)}</td><td>${ssel(t.id,t.status,'day')}</td><td style="text-align:center">${tr>0?`<span class="tbadge2">↩ ${tr}</span>`:'—'}</td><td class="dlcell ${dlCls(t.deadline)}">${t.deadline||'—'}</td>${eBtns}</tr>`;
+  });
+  tb.innerHTML=h;
+}
+
+// ── ROLLOVER ──
+function checkRollover(){
+  const today=todayK();const d=new Date();d.setDate(d.getDate()-1);const yest=toKey(d);
+  const yTasks=C.day[yest]||[];const tTasks=C.day[today]||[];
+  const pending=yTasks.filter(t=>t.status!=='Выполнено'&&!tTasks.some(x=>x.main===t.main&&x.dir===t.dir));
+  if(!pending.length){document.getElementById('rvbanner').innerHTML='';return;}
+  document.getElementById('rvbanner').innerHTML=`<div class="rvbanner"><div class="rvtext">Вчера не выполнено: <span>${pending.length}</span> задач. Перенести на сегодня?</div><div style="display:flex;gap:8px"><button class="btn btn-w btn-sm" onclick="doRollover()">Перенести все</button><button class="btn btn-g btn-sm" onclick="document.getElementById('rvbanner').innerHTML=''">Пропустить</button></div></div>`;
+}
+window.doRollover=async()=>{
+  const today=todayK();const d=new Date();d.setDate(d.getDate()-1);const yest=toKey(d);
+  const pending=(C.day[yest]||[]).filter(t=>t.status!=='Выполнено');
+  const tTasks=C.day[today]||[];let cnt=0;
+  for(const t of pending){if(!tTasks.some(x=>x.main===t.main&&x.dir===t.dir)){const id=genId();await fsSet('day',id,{...t,id,dayKey:today,status:'Не начато',transfers:(t.transfers||0)+1});cnt++;}}
+  document.getElementById('rvbanner').innerHTML='';toast(`Перенесено ${cnt} задач`);
+};
+window.rollOne=async(id)=>{
+  const key=curDayK();const t=(C.day[key]||[]).find(x=>x.id===id);if(!t)return;
+  const d=new Date(key+'T12:00:00');d.setDate(d.getDate()+1);const nk=toKey(d);
+  if((C.day[nk]||[]).some(x=>x.main===t.main&&x.dir===t.dir)){toast('Уже есть на завтра');return;}
+  const nid=genId();await fsSet('day',nid,{...t,id:nid,dayKey:nk,status:'Не начато',transfers:(t.transfers||0)+1});
+  toast('Задача перенесена на завтра');
+};
+
+// ── TEAM ──
+function renderTeam(){
+  document.getElementById('bt').textContent=C.team.length;
+  const g=document.getElementById('team-grid');
+  if(!C.team.length){g.innerHTML=`<div class="empty"><div class="eicon">👥</div>Нет сотрудников</div>`;return;}
+  let h='';
+  C.team.forEach(m=>{
+    const dTasks=(C.day[todayK()]||[]).filter(t=>t.owner===m.name||t.owner.includes(m.name));
+    const done=dTasks.filter(t=>t.status==='Выполнено').length;
+    const allT=C.master.filter(t=>t.owner===m.name||t.owner.includes(m.name));
+    const eBtns=isAdmin?`<button class="btn btn-g btn-sm" onclick="editMember('${m.id}')">✏</button><button class="btn btn-d btn-sm" onclick="delMember('${m.id}')">✕</button>`:'';
+    if(m.type==='vacancy'){
+      h+=`<div class="mcard vacancy"><span class="vlabel">🔍 Вакансия</span><div class="mname" style="color:var(--gray-400);cursor:default">${m.role}</div><div class="mstats" style="color:var(--gray-400)">Позиция открыта</div><div style="margin-top:10px;display:flex;gap:6px">${eBtns}</div></div>`;
+    }else{
+      h+=`<div class="mcard">
+        <div class="mavatar" style="background:${m.color}" onclick="showProfile('${m.name}')">${m.name.slice(0,1)}</div>
+        <div class="mname" onclick="showProfile('${m.name}')">${m.name}</div>
+        <div class="mrole">${m.role}</div>
+        <div class="mstats">
+          <div class="mstat"><span>В мастере:</span><strong>${allT.length}</strong></div>
+          <div class="mstat"><span>Сегодня:</span><strong>${dTasks.length} задач, ${done} выполнено</strong></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-g btn-sm" onclick="showProfile('${m.name}')">👤 Профиль</button>
+          <button class="btn btn-g btn-sm" onclick="setF('day','${m.name}');switchView('day')">☀ День</button>
+          ${eBtns}
+        </div>
+      </div>`;
+    }
+  });
+  g.innerHTML=h;
+}
+
+// ── HISTORY ──
+function renderHistory(){
+  const keys=Object.keys(C.day).sort().reverse();
+  document.getElementById('bh').textContent=keys.length;
+  const c=document.getElementById('history-list');
+  if(!keys.length){c.innerHTML=`<div class="empty"><div class="eicon">📋</div>История пуста</div>`;return;}
+  let h='<div class="hlist">';
+  keys.forEach(key=>{
+    const tasks=C.day[key]||[];
+    const done=tasks.filter(t=>t.status==='Выполнено').length;
+    const total=tasks.length;const pct=total?Math.round(done/total*100):0;
+    const trs=tasks.filter(t=>(t.transfers||0)>0).length;
+    let rows='';
+    tasks.forEach(t=>{
+      const tr=t.transfers||0;
+      rows+=`<div class="htrow">
+        <span style="flex:1;font-weight:500">${t.main}</span>
+        ${ownerChips(t.owner)}
+        <span style="font-size:12px;font-weight:500;padding:3px 8px;border-radius:20px;background:${sbg(t.status)};color:${sfc(t.status)}">${t.status}</span>
+        ${tr>0?`<span class="tbadge2">↩ ${tr}</span>`:''}
+      </div>`;
+    });
+    h+=`<div class="hitem"><div class="hhead" onclick="toggleH('hb-${key}')"><div><div class="hdate">${fmtD(key)}</div><div class="hmeta">${total} задач · ${done} выполнено · ${pct}%${trs?' · ↩ '+trs+' переносов':''}</div></div><span style="color:var(--gray-400);font-size:18px">›</span></div><div class="hbody" id="hb-${key}">${rows}</div></div>`;
+  });
+  h+='</div>';c.innerHTML=h;
+}
+window.toggleH=id=>document.getElementById(id).classList.toggle('open');
+
+// ── PROFILE ──
+window.showProfile=(name)=>{
+  const m=C.team.find(x=>x.name===name||name.includes(x.name));
+  if(!m){toast('Сотрудник не найден в команде');return;}
+  const mName=m.name;
+  const isM=t=>t.owner===mName||t.owner.includes(mName);
+  const masterT=C.master.filter(isM);
+  const wk=curWK();
+  const weekT=C.week.filter(t=>t.weekKey===wk&&isM(t));
+  const todayT=(C.day[todayK()]||[]).filter(isM);
+  const allDays=Object.keys(C.day).sort().reverse();
+  const histDays=allDays.map(k=>({key:k,tasks:(C.day[k]||[]).filter(isM)})).filter(x=>x.tasks.length);
+  const wDone=weekT.filter(t=>t.status==='Выполнено').length;
+  const wTotal=weekT.length;
+  const wPct=wTotal?Math.round(wDone/wTotal*100):0;
+  const totalTrs=histDays.reduce((s,d)=>s+d.tasks.reduce((ss,t)=>ss+(t.transfers||0),0),0);
+  const totalDone=histDays.reduce((s,d)=>s+d.tasks.filter(t=>t.status==='Выполнено').length,0);
+  const pColor=wPct>=80?'var(--green)':wPct>=50?'var(--accent)':'var(--yellow)';
+
+  const tRow=t=>`<div class="ptrow">
+    <div style="flex:1"><div class="ptname">${t.main}</div>${t.detail?`<div class="ptsub">${t.detail}</div>`:''}</div>
+    ${(t.transfers||0)>0?`<span class="tbadge2">↩${t.transfers}</span>`:''}
+    <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:${sbg(t.status)};color:${sfc(t.status)}">${t.status}</span>
+  </div>`;
+
+  let h=`<div class="pheader">
+    <div class="pavatar" style="background:${m.color}">${mName.slice(0,1)}</div>
+    <div style="flex:1">
+      <div class="pname">${mName}</div>
+      <div class="prole">${m.role}</div>
+      <div class="pstats">
+        <div class="pstat"><div class="psnum">${masterT.length}</div><div class="pslbl">В мастере</div></div>
+        <div class="pstat y"><div class="psnum">${wTotal}</div><div class="pslbl">Эта неделя</div></div>
+        <div class="pstat g"><div class="psnum">${wDone}</div><div class="pslbl">Выполнено</div></div>
+        <div class="pstat"><div class="psnum">${wPct}%</div><div class="pslbl">Прогресс</div></div>
+        <div class="pstat r"><div class="psnum">${totalTrs}</div><div class="pslbl">Переносов</div></div>
+        <div class="pstat g"><div class="psnum">${totalDone}</div><div class="pslbl">Всего сделано</div></div>
+      </div>
+      <div class="pbar2" style="margin-top:8px"><div class="pfill2" style="width:${wPct}%;background:${pColor}"></div></div>
+    </div>
+  </div>`;
+
+  if(todayT.length){h+=`<div class="psection"><div class="psectitle">☀ Сегодня (${todayT.length})</div>`;todayT.forEach(t=>h+=tRow(t));h+='</div>';}
+  if(weekT.length){h+=`<div class="psection"><div class="psectitle">📅 Текущая неделя (${wDone}/${wTotal})</div>`;weekT.forEach(t=>h+=tRow(t));h+='</div>';}
+  if(masterT.length){h+=`<div class="psection"><div class="psectitle">🗂 В мастере (${masterT.length})</div>`;masterT.forEach(t=>h+=tRow(t));h+='</div>';}
+  if(histDays.length){
+    h+=`<div class="psection"><div class="psectitle">📋 История по дням</div>`;
+    histDays.forEach(({key,tasks})=>{
+      const done=tasks.filter(t=>t.status==='Выполнено').length;
+      const total=tasks.length;const pct=total?Math.round(done/total*100):0;
+      h+=`<div class="dhrow"><div class="dhdate">${fmtD(key)} — ${done}/${total} (${pct}%)</div><div class="dhtasks">`;
+      tasks.forEach(t=>{const tr=t.transfers||0;h+=`<span class="dchip" style="background:${sbg(t.status)};color:${sfc(t.status)}">${t.main}${tr>0?' ↩'+tr:''}</span>`;});
+      h+='</div></div>';
+    });
+    h+='</div>';
+  }
+  if(!masterT.length&&!weekT.length&&!histDays.length)h+='<div class="empty"><div class="eicon">📋</div>Нет задач</div>';
+
+  document.getElementById('mProfileTitle').textContent=mName+' — профиль';
+  document.getElementById('profileContent').innerHTML=h;
+  document.getElementById('mProfile').classList.add('open');
+};
+
+// ── CHAIN ──
+window.showChain=(ctx,id)=>{
+  let task,pWeek,pMaster,children=[];
+  if(ctx==='day'){
+    const key=curDayK();task=(C.day[key]||[]).find(x=>x.id===id);
+    if(task&&task.parentId){pWeek=C.week.find(x=>x.id===task.parentId);}
+    if(pWeek&&pWeek.parentId){pMaster=C.master.find(x=>x.id===pWeek.parentId);}
+  }else if(ctx==='week'){
+    task=C.week.find(x=>x.id===id);
+    if(task&&task.parentId){pMaster=C.master.find(x=>x.id===task.parentId);}
+    Object.values(C.day).forEach(arr=>arr.forEach(t=>{if(t.parentId===id)children.push({...t,_ctx:'day'});}));
+  }else{
+    task=C.master.find(x=>x.id===id);
+    C.week.filter(t=>t.parentId===id).forEach(wt=>{
+      children.push({...wt,_ctx:'week'});
+      Object.values(C.day).forEach(arr=>arr.forEach(t=>{if(t.parentId===wt.id)children.push({...t,_ctx:'day'});}));
+    });
+  }
+  if(!task){toast('Задача не найдена');return;}
+  const card=(t,ml,lbl)=>`<div class="chain-card" style="background:${sbg(t.status)};margin-left:${ml}px;border-left:3px solid ${sfc(t.status)}">
+    <div class="chain-level">${lbl}</div>
+    <div class="chain-name">${t.main}</div>
+    ${t.detail?`<div class="chain-sub">${t.detail}</div>`:''}
+    <div class="chain-meta">
+      ${t.owner?`<span class="chain-badge">${t.owner}</span>`:''}
+      <span class="chain-badge" style="color:${sfc(t.status)}">${t.status}</span>
+      ${(t.transfers||0)>0?`<span class="chain-badge" style="color:var(--red)">↩ ${t.transfers}</span>`:''}
+    </div>
+  </div>`;
+  let h='';
+  if(pMaster)h+=card(pMaster,0,'🗂 Мастер');
+  if(pWeek)h+=card(pWeek,20,'📅 Неделя');
+  if(ctx==='master')h+=card(task,0,'🗂 Мастер');
+  else if(ctx==='week')h+=card(task,20,'📅 Неделя');
+  else h+=card(task,40,'☀ День');
+  if(children.length){
+    h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-400);margin:12px 0 6px 20px">Подзадачи:</div>';
+    children.forEach(c=>h+=card(c,c._ctx==='day'?40:20,c._ctx==='day'?'☀ День':'📅 Неделя'));
+  }
+  if(!pMaster&&!pWeek&&!children.length&&ctx!=='master')h+='<div class="empty" style="padding:24px">Задача не привязана к другим</div>';
+  document.getElementById('chainContent').innerHTML=h;
+  document.getElementById('mChain').classList.add('open');
+};
+
+// ── STATUS ──
+window.updateStatus=async(ctx,id,val)=>{
+  if(!isAdmin)return;
+  if(ctx==='master'){await fsUpd('master',id,{status:val});}
+  else if(ctx==='week'){
+    await fsUpd('week',id,{status:val});
+    const t=C.week.find(x=>x.id===id);if(t)await syncUp(t.main,t.dir,val);
+  }else if(ctx==='day'){
+    await fsUpd('day',id,{status:val});
+    const t=(C.day[curDayK()]||[]).find(x=>x.id===id);
+    if(t){await syncUp(t.main,t.dir,val);if(val==='Выполнено')toast('✅ Выполнено! Обновлено в Неделе и Мастере');}
+  }
+};
+async function syncUp(main,dir,val){
+  const wt=C.week.find(x=>x.main===main&&x.dir===dir);
+  if(wt){if(val==='Выполнено')await fsUpd('week',wt.id,{status:'Выполнено'});else if(val==='В работе'&&wt.status==='Не начато')await fsUpd('week',wt.id,{status:'В работе'});}
+  const mt=C.master.find(x=>x.main===main&&x.dir===dir);
+  if(mt){if(val==='Выполнено')await fsUpd('master',mt.id,{status:'Выполнено'});else if(val==='В работе'&&mt.status==='Не начато')await fsUpd('master',mt.id,{status:'В работе'});}
+}
+window.updComment=async(e,ctx,id)=>{if(!isAdmin)return;if(ctx==='week')await fsUpd('week',id,{comment:e.target.value});};
+
+// ── PUSH TASKS ──
+window.pushToWeek=async(mid)=>{
+  const t=C.master.find(x=>x.id===mid);if(!t)return;
+  const wk=curWK();
+  if(C.week.some(x=>x.weekKey===wk&&x.main===t.main&&x.dir===t.dir)){toast('Уже есть в неделе');return;}
+  const id=genId();await fsSet('week',id,{id,weekKey:wk,dir:t.dir,main:t.main,detail:t.detail,owner:t.owner,speed:3,status:'Не начато',comment:'',parentId:mid});
+  toast('📅 Добавлено в неделю');
+};
+window.pushToDay=async(wid)=>{
+  const t=C.week.find(x=>x.id===wid);if(!t)return;
+  const key=curDayK();
+  if((C.day[key]||[]).some(x=>x.main===t.main&&x.dir===t.dir)){toast('Уже есть в дне');return;}
+  const id=genId();await fsSet('day',id,{id,dayKey:key,dir:t.dir,main:t.main,detail:t.detail,owner:t.owner,speed:t.speed,status:'Не начато',deadline:'',transfers:0,parentId:wid});
+  switchView('day');toast('☀ Добавлено в день');
+};
+
+// ── FROM WEEK ──
+window.openFromWeek=()=>{
+  const wk=curWK();const wTasks=C.week.filter(t=>t.weekKey===wk&&t.status!=='Выполнено');
+  const dk=curDayK();const dTasks=C.day[dk]||[];
+  let h='';
+  if(!wTasks.length)h='<div class="empty"><div>Нет незавершённых задач в неделе</div></div>';
+  else wTasks.forEach(t=>{
+    const already=dTasks.some(x=>x.main===t.main&&x.dir===t.dir);
+    h+=`<label style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--gray-100);cursor:pointer"><input type="checkbox" value="${t.id}" ${already?'disabled checked':''} style="width:16px;height:16px"><div><div style="font-weight:500;font-size:13px">${t.main}</div><div style="font-size:12px;color:var(--gray-400)">${t.dir}${t.detail?' · '+t.detail:''} ${already?'<span style="color:var(--green)">— уже добавлено</span>':''}</div></div></label>`;
+  });
+  document.getElementById('fromWeekList').innerHTML=h;
+  document.getElementById('mFromWeek').classList.add('open');
+};
+window.confirmFromWeek=async()=>{
+  const checks=document.querySelectorAll('#fromWeekList input:checked:not(:disabled)');
+  const key=curDayK();let added=0;
+  for(const cb of checks){
+    const t=C.week.find(x=>x.id===cb.value);
+    if(t){const id=genId();await fsSet('day',id,{id,dayKey:key,dir:t.dir,main:t.main,detail:t.detail,owner:t.owner,speed:t.speed,status:'Не начато',deadline:'',transfers:0,parentId:t.id});added++;}
+  }
+  closeM('mFromWeek');if(added)toast('☀ Добавлено '+added+' задач');
+};
+
+// ── ADD TASK ──
+window.openAddModal=(ctx)=>{
+  mCtx=ctx;
+  document.getElementById('mTaskTitle').textContent='Добавить задачу';
+  ['fMain','fDetail','fComment'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fDir').value='Проекты';
+  document.getElementById('fSpeed').value='3';
+  document.getElementById('fDeadline').value='';
+  document.getElementById('fDeadlineGrp').style.display=ctx==='day'?'':'none';
+  const sel=document.getElementById('fOwner');
+  sel.innerHTML='<option value="">— выбрать —</option>';
+  owners().forEach(n=>sel.innerHTML+=`<option>${n}</option>`);
+  // Parent field
+  const pg=document.getElementById('fParentGrp');
+  const ps=document.getElementById('fParent');
+  ps.innerHTML='<option value="">— без привязки —</option>';
+  if(ctx==='week'){
+    pg.style.display='';
+    document.getElementById('fParentLbl').textContent='задаче из Мастера';
+    C.master.forEach(t=>ps.innerHTML+=`<option value="${t.id}">${t.dir} / ${t.main}</option>`);
+  }else if(ctx==='day'){
+    pg.style.display='';
+    document.getElementById('fParentLbl').textContent='задаче из Недели';
+    C.week.filter(t=>t.weekKey===curWK()).forEach(t=>ps.innerHTML+=`<option value="${t.id}">${t.dir} / ${t.main}</option>`);
+  }else{
+    pg.style.display='none';
+  }
+  document.getElementById('mTask').classList.add('open');
+};
+window.saveTask=async()=>{
+  const dir=document.getElementById('fDir').value,main=document.getElementById('fMain').value.trim();
+  const detail=document.getElementById('fDetail').value.trim(),owner=document.getElementById('fOwner').value;
+  const speed=parseInt(document.getElementById('fSpeed').value),deadline=document.getElementById('fDeadline').value;
+  const comment=document.getElementById('fComment').value.trim();
+  const parentId=document.getElementById('fParent').value||'';
+  if(!main){alert('Введите название задачи');return;}
+  const id=genId();
+  if(mCtx==='master')await fsSet('master',id,{id,dir,main,detail,owner,status:'Не начато',comment,parentId:''});
+  else if(mCtx==='week')await fsSet('week',id,{id,weekKey:curWK(),dir,main,detail,owner,speed,status:'Не начато',comment,parentId});
+  else if(mCtx==='day'){const key=curDayK();await fsSet('day',id,{id,dayKey:key,dir,main,detail,owner,speed,status:'Не начато',deadline,transfers:0,parentId});}
+  closeM('mTask');toast('Задача добавлена');
+};
+window.delTask=async(ctx,id)=>{if(!confirm('Удалить задачу?'))return;await fsDel(ctx,id);};
+
+// ── TEAM ──
+window.openTeamModal=()=>{
+  editTeamId=null;document.getElementById('mTeamTitle').textContent='Добавить';
+  ['tmName','tmRole'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tmType').value='active';document.getElementById('tmColor').value='#2E7CF6';
+  document.getElementById('mTeam').classList.add('open');
+};
+window.editMember=(id)=>{
+  const m=C.team.find(x=>x.id===id);if(!m)return;
+  editTeamId=id;document.getElementById('mTeamTitle').textContent='Редактировать';
+  document.getElementById('tmType').value=m.type;document.getElementById('tmName').value=m.name||'';
+  document.getElementById('tmRole').value=m.role||'';document.getElementById('tmColor').value=m.color||'#2E7CF6';
+  document.getElementById('mTeam').classList.add('open');
+};
+window.saveMember=async()=>{
+  const type=document.getElementById('tmType').value,name=document.getElementById('tmName').value.trim();
+  const role=document.getElementById('tmRole').value.trim(),color=document.getElementById('tmColor').value;
+  if(!role){alert('Введите должность');return;}
+  const id=editTeamId||genId();
+  await fsSet('team',id,{id,type,name,role,color});closeM('mTeam');toast('Сохранено');
+};
+window.delMember=async(id)=>{if(!confirm('Удалить?'))return;await fsDel('team',id);};
+window.toggleVac=()=>{document.getElementById('tmNameGrp').style.display=document.getElementById('tmType').value==='vacancy'?'none':'';};
+
+// ── NAV ──
+window.changeWeek=d=>{weekOff+=d;renderWeek();};
+window.changeDay=d=>{dayOff+=d;renderDay();};
+
+// ── VIEWS ──
+window.switchView=v=>{
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>{if(t.getAttribute('onclick')===`switchView('${v}')`)t.classList.add('active');});
+  if(v==='calendar') renderCalendar();
+  if(v==='reports') initReportDates();
+};
+
+// ── MODAL ──
+window.closeM=id=>document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.moverlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+
+// ── TOAST ──
+let tTimer;
+window.toast=msg=>{const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(tTimer);tTimer=setTimeout(()=>el.classList.remove('show'),2800);};
+
+function renderAll(){renderMaster();renderWeek();renderDay();renderTeam();renderHistory();updEO();}
+
+
+
+// ── SUBTASKS ──
+let stParentId = '';
+
+window.openSubtaskModal = (parentId) => {
+  const parent = C.master.find(x=>x.id===parentId);
+  if(!parent) return;
+  stParentId = parentId;
+  document.getElementById('mSubtaskTitle').textContent = '+ Подзадача к: ' + parent.main;
+  document.getElementById('mSubtaskParentName').textContent = '🗂 ' + parent.dir + ' / ' + parent.main;
+  ['stMain','stDetail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('stSpeed').value='3';
+  document.getElementById('stTarget').value='week';
+  const sel=document.getElementById('stOwner');
+  sel.innerHTML='<option value="">— выбрать —</option>';
+  owners().forEach(n=>sel.innerHTML+=`<option>${n}</option>`);
+  document.getElementById('mSubtask').classList.add('open');
+};
+
+window.saveSubtask = async () => {
+  const main = document.getElementById('stMain').value.trim();
+  if(!main){alert('Введите название подзадачи');return;}
+  const parent = C.master.find(x=>x.id===stParentId);
+  if(!parent) return;
+  const detail = document.getElementById('stDetail').value.trim();
+  const owner = document.getElementById('stOwner').value;
+  const speed = parseInt(document.getElementById('stSpeed').value);
+  const target = document.getElementById('stTarget').value;
+
+  // Create in master
+  const mid = genId();
+  await fsSet('master', mid, {id:mid, dir:parent.dir, main, detail, owner, status:'Не начато', comment:'', parentId:stParentId});
+
+  // Optionally add to week
+  if(target==='week'||target==='day'){
+    const wid = genId();
+    await fsSet('week', wid, {id:wid, weekKey:curWK(), dir:parent.dir, main, detail, owner, speed, status:'Не начато', comment:'', parentId:mid});
+    // Optionally add to day
+    if(target==='day'){
+      const did = genId();
+      const key = curDayK();
+      await fsSet('day', did, {id:did, dayKey:key, dir:parent.dir, main, detail, owner, speed, status:'Не начато', deadline:'', transfers:0, parentId:wid});
+    }
+  }
+  closeM('mSubtask');
+  toast('Подзадача создана' + (target==='week'?' и добавлена в неделю':target==='day'?' и добавлена в день':''));
+};
+
+// Track expanded master tasks
+let expandedMaster = new Set();
+window.toggleExpand = (id) => {
+  if(expandedMaster.has(id)) expandedMaster.delete(id);
+  else expandedMaster.add(id);
+  renderMaster();
+};
+
+
+// ── REPORTS ──
+let rptMode = 'biweekly'; // 'biweekly' or 'weekly'
+let rptWeekOff = 0;
+let builderSelections = {}; // taskId -> { include, subtasks: {stId -> include}, activities: {actId -> include} }
+let generatedData = null;
+
+function initReportDates() {
+  const today = new Date();
+  const day = today.getDay() || 7;
+  // Default: last 2 weeks
+  const to = new Date(today);
+  const from = new Date(today);
+  from.setDate(today.getDate() - 13);
+  document.getElementById('rpt2w-from').value = toKey(from);
+  document.getElementById('rpt2w-to').value = toKey(to);
+  updateRptWeekLabel();
+}
+
+function updateRptWeekLabel() {
+  const d = new Date();
+  const day = d.getDay() || 7;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() - day + 1 + rptWeekOff * 7);
+  const fri = new Date(mon);
+  fri.setDate(mon.getDate() + 4);
+  const fmt = x => x.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+  document.getElementById('rptWeekLabel').textContent = fmt(mon) + ' – ' + fmt(fri);
+}
+
+window.changeRptWeek = d => { rptWeekOff += d; updateRptWeekLabel(); };
+
+window.openReportBuilder = (mode) => {
+  rptMode = mode;
+  document.getElementById('builderTitle').textContent =
+    mode === 'biweekly' ? '📊 Конструктор 2-недельной презентации' : '📝 Конструктор еженедельного отчёта';
+  document.getElementById('builderStep1').style.display = '';
+  document.getElementById('builderStep2').style.display = 'none';
+
+  // Get period
+  let fromKey, toKey2;
+  if (mode === 'biweekly') {
+    fromKey = document.getElementById('rpt2w-from').value;
+    toKey2 = document.getElementById('rpt2w-to').value;
+  } else {
+    const d = new Date();
+    const day = d.getDay() || 7;
+    const mon = new Date(d);
+    mon.setDate(d.getDate() - day + 1 + rptWeekOff * 7);
+    const fri = new Date(mon);
+    fri.setDate(mon.getDate() + 4);
+    fromKey = toKey(mon);
+    toKey2 = toKey(fri);
+  }
+
+  buildTaskList(fromKey, toKey2);
+  document.getElementById('mReportBuilder').classList.add('open');
+};
+
+function buildTaskList(fromKey, toKey2) {
+  // Collect all tasks active in period
+  // Master tasks -> check if any day/week task exists in period
+  const dayKeys = Object.keys(C.day).filter(k => k >= fromKey && k <= toKey2);
+
+  // Collect which master tasks had activity
+  const activeMasterIds = new Set();
+  dayKeys.forEach(dk => {
+    (C.day[dk] || []).forEach(t => {
+      // Walk up: day -> week -> master
+      const wt = C.week.find(w => w.id === t.parentId);
+      if (wt) {
+        const mt = C.master.find(m => m.id === wt.parentId);
+        if (mt) activeMasterIds.add(mt.id);
+        else activeMasterIds.add(wt.id); // week task itself as "master"
+      }
+    });
+  });
+
+  // Also include master tasks with week tasks in period
+  const wkKeys = C.week.filter(t => {
+    return t.weekKey >= fromKey.slice(0,10) && t.weekKey <= toKey2.slice(0,10);
+  });
+  wkKeys.forEach(t => {
+    if (t.parentId) activeMasterIds.add(t.parentId);
+    else activeMasterIds.add(t.id);
+  });
+
+  // If nothing found, show all master tasks
+  let masterTasks = C.master.filter(t => !t.parentId || !C.master.find(m => m.id === t.parentId));
+  if (activeMasterIds.size > 0) {
+    masterTasks = masterTasks.filter(t => activeMasterIds.has(t.id));
+  }
+
+  // Build selections
+  builderSelections = {};
+  masterTasks.forEach(mt => {
+    const subs = C.master.filter(t => t.parentId === mt.id);
+    const subSel = {};
+    subs.forEach(st => subSel[st.id] = true);
+    builderSelections[mt.id] = { include: true, subtasks: subSel };
+  });
+
+  // Render
+  let h = '';
+  if (!masterTasks.length) {
+    h = '<div class="empty"><div class="eicon">🔍</div>Нет задач за выбранный период.<br>Попробуй изменить даты.</div>';
+  } else {
+    masterTasks.forEach(mt => {
+      const subs = C.master.filter(t => t.parentId === mt.id);
+      const dirColors = {'Проекты':'6D28D9','IT|AI':'1D4ED8','Методология':'9D174D','SimBASE':'92400E'};
+      const dc = dirColors[mt.dir] || '475569';
+      h += `<div class="builder-task-block" id="btb-${mt.id}">
+        <div class="builder-task-header">
+          <input type="checkbox" id="bchk-${mt.id}" checked onchange="toggleBuilderTask('${mt.id}',this.checked)" style="width:16px;height:16px;cursor:pointer">
+          <span style="font-size:11px;font-weight:700;color:#${dc};background:#${dc}18;padding:2px 8px;border-radius:10px">${mt.dir}</span>
+          <span class="builder-task-name">${mt.main}</span>
+          <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--gray-100);color:var(--gray-600)">${mt.status}</span>
+        </div>`;
+      if (subs.length) {
+        subs.forEach(st => {
+          h += `<div class="builder-subtask-item">
+            <input type="checkbox" id="bchk-${st.id}" checked onchange="toggleBuilderSub('${mt.id}','${st.id}',this.checked)" style="width:14px;height:14px;cursor:pointer">
+            <span style="font-size:10px">└─</span>
+            <span>${st.main}</span>
+            <span style="font-size:11px;color:var(--gray-400)">${st.status}</span>
+          </div>`;
+        });
+      }
+      h += '</div>';
+    });
+  }
+  document.getElementById('builderTaskList').innerHTML = h;
+}
+
+window.toggleBuilderTask = (id, checked) => {
+  if (builderSelections[id]) builderSelections[id].include = checked;
+  // Dim the block
+  const block = document.getElementById('btb-' + id);
+  if (block) block.style.opacity = checked ? '1' : '0.4';
+};
+
+window.toggleBuilderSub = (parentId, subId, checked) => {
+  if (builderSelections[parentId]) builderSelections[parentId].subtasks[subId] = checked;
+};
+
+window.generateReport = async () => {
+  document.getElementById('builderStep1').innerHTML =
+    '<div class="generating-overlay"><div class="spin">⚙️</div><div style="margin-top:16px;font-size:14px">AI генерирует текст презентации...</div></div>';
+
+  // Collect selected tasks
+  const selected = [];
+  for (const [mtId, sel] of Object.entries(builderSelections)) {
+    if (!sel.include) continue;
+    const mt = C.master.find(t => t.id === mtId);
+    if (!mt) continue;
+
+    const selectedSubs = C.master.filter(t => t.parentId === mtId && sel.subtasks[t.id]);
+    selected.push({ master: mt, subs: selectedSubs });
+  }
+
+  if (!selected.length) {
+    toast('Выбери хотя бы одну задачу');
+    return;
+  }
+
+  // Build prompt for AI
+  const taskDescriptions = selected.map(({master, subs}) => {
+    let desc = `Задача: ${master.main} (${master.dir}, статус: ${master.status})`;
+    if (subs.length) {
+      desc += '\nПодзадачи:\n' + subs.map(s => `  - ${s.main} [${s.status}]`).join('\n');
+    }
+    return desc;
+  }).join('\n\n');
+
+  const prompt = `Ты помогаешь руководителю Процессного офиса казахстанской компании Sergek Group подготовить краткую презентацию для куратора и CEO.
+
+Для каждой задачи сгенерируй 3-5 bullet points на русском языке о том, что было сделано. Пиши профессионально, кратко, без воды. Используй глаголы в прошедшем времени. Не упоминай имена сотрудников.
+
+Также для слайда "Ближайшие шаги" напиши по одной строке на каждую задачу — что планируется дальше.
+
+Задачи:
+${taskDescriptions}
+
+Ответь строго в формате JSON:
+{
+  "tasks": [
+    {
+      "id": "индекс задачи начиная с 0",
+      "bullets": ["пункт 1", "пункт 2", "пункт 3"],
+      "nextStep": "краткий следующий шаг"
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.map(c => c.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const aiResult = JSON.parse(clean);
+
+    // Merge AI results with selected tasks
+    generatedData = {
+      tasks: selected.map(({master, subs}, i) => {
+        const aiTask = aiResult.tasks.find(t => parseInt(t.id) === i) || { bullets: [], nextStep: '' };
+        return {
+          id: master.id,
+          name: master.main,
+          dir: master.dir,
+          status: master.status,
+          bullets: aiTask.bullets || [],
+          nextStep: aiTask.nextStep || '',
+          comment: ''
+        };
+      })
+    };
+
+    showStep2();
+  } catch(e) {
+    // Fallback: use raw task data without AI
+    generatedData = {
+      tasks: selected.map(({master, subs}) => ({
+        id: master.id,
+        name: master.main,
+        dir: master.dir,
+        status: master.status,
+        bullets: subs.filter(s => s.status === 'Выполнено' || s.status === 'В работе').map(s => s.main),
+        nextStep: subs.filter(s => s.status !== 'Выполнено').map(s => s.main).join(', '),
+        comment: ''
+      }))
+    };
+    showStep2();
+  }
+};
+
+function showStep2() {
+  document.getElementById('builderStep1').style.display = 'none';
+  document.getElementById('builderStep2').style.display = '';
+
+  const period = rptMode === 'biweekly'
+    ? `${document.getElementById('rpt2w-from').value} – ${document.getElementById('rpt2w-to').value}`
+    : document.getElementById('rptWeekLabel').textContent;
+
+  let h = '';
+
+  // Title slide preview
+  h += `<div class="preview-slide">
+    <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px">СЛАЙД 1 · Титульный</div>
+    <div class="preview-slide-title">Процессный офис</div>
+    <div class="preview-slide-meta">${period}</div>
+    <div style="font-size:12px;color:var(--gray-600)">Повестка: ${generatedData.tasks.map((t,i) => `${i+1}. ${t.name}`).join(' · ')}</div>
+  </div>`;
+
+  // Task slides
+  generatedData.tasks.forEach((task, i) => {
+    h += `<div class="preview-slide">
+      <div style="font-size:11px;color:var(--gray-400);margin-bottom:4px">СЛАЙД ${i+2} · ${task.dir}</div>
+      <div class="preview-slide-title">${task.name}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Что сделано</div>
+      <ul class="preview-bullet-list" id="bullets-${task.id}">`;
+    task.bullets.forEach((b, bi) => {
+      h += `<li><input style="border:none;border-bottom:1px solid var(--gray-200);width:100%;font-size:13px;font-family:inherit;padding:2px 0;color:var(--gray-800);background:transparent" 
+              value="${b}" 
+              onchange="updateBullet('${task.id}',${bi},this.value)"
+              onfocus="this.style.borderBottomColor='var(--accent)'"
+              onblur="this.style.borderBottomColor='var(--gray-200)'"/></li>`;
+    });
+    h += `</ul>
+      <div style="margin-top:6px">
+        <span style="font-size:11px;color:var(--gray-400)">+ добавить пункт</span>
+        <button onclick="addBullet('${task.id}')" style="border:none;background:none;color:var(--accent);cursor:pointer;font-size:12px;margin-left:4px">＋</button>
+      </div>
+      <textarea class="preview-comment-field" placeholder="Дополнительный комментарий (необязательно)..." 
+        onchange="updateComment2('${task.id}',this.value)">${task.comment}</textarea>
+    </div>`;
+  });
+
+  // Next steps slide
+  h += `<div class="preview-next-steps">
+    <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">ПОСЛЕДНИЙ СЛАЙД · Ближайшие шаги</div>`;
+  generatedData.tasks.forEach(task => {
+    h += `<div class="preview-next-step-item">
+      <span style="color:var(--accent);margin-top:2px">●</span>
+      <input class="next-step-field" value="${task.name}: ${task.nextStep}" 
+        onchange="updateNextStep('${task.id}',this.value)"/>
+    </div>`;
+  });
+  h += '</div>';
+
+  document.getElementById('builderPreview').innerHTML = h;
+}
+
+window.updateBullet = (taskId, idx, val) => {
+  const task = generatedData.tasks.find(t => t.id === taskId);
+  if (task) task.bullets[idx] = val;
+};
+window.addBullet = (taskId) => {
+  const task = generatedData.tasks.find(t => t.id === taskId);
+  if (!task) return;
+  task.bullets.push('');
+  showStep2();
+};
+window.updateComment2 = (taskId, val) => {
+  const task = generatedData.tasks.find(t => t.id === taskId);
+  if (task) task.comment = val;
+};
+window.updateNextStep = (taskId, val) => {
+  const task = generatedData.tasks.find(t => t.id === taskId);
+  if (task) task.nextStep = val;
+};
+
+window.backToStep1 = () => {
+  document.getElementById('builderStep1').style.display = '';
+  document.getElementById('builderStep2').style.display = 'none';
+};
+
+window.downloadReport = async () => {
+  const btn = document.getElementById('downloadBtn');
+  btn.textContent = '⏳ Создаём PPTX...';
+  btn.disabled = true;
+
+  try {
+    const period = rptMode === 'biweekly'
+      ? `${document.getElementById('rpt2w-from').value} – ${document.getElementById('rpt2w-to').value}`
+      : document.getElementById('rptWeekLabel').textContent;
+
+    const today = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+
+    // Next period (2 weeks after end date)
+    let nextPeriod = '';
+    if (rptMode === 'biweekly') {
+      const toDate = new Date(document.getElementById('rpt2w-to').value + 'T12:00:00');
+      const nextFrom = new Date(toDate); nextFrom.setDate(toDate.getDate() + 1);
+      const nextTo = new Date(toDate); nextTo.setDate(toDate.getDate() + 14);
+      const fmt = x => x.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+      nextPeriod = fmt(nextFrom) + ' – ' + fmt(nextTo);
+    }
+
+    await generatePPTX({
+      dateLabel: today,
+      period,
+      nextPeriod,
+      tasks: generatedData.tasks,
+      nextSteps: generatedData.tasks.map(t => t.nextStep).filter(Boolean)
+    });
+
+    toast('✅ Презентация скачана!');
+  } catch(e) {
+    toast('Ошибка: ' + e.message);
+  } finally {
+    btn.textContent = '⬇ Скачать PPTX';
+    btn.disabled = false;
+  }
+};
+
+// ── PPTX GENERATION IN BROWSER ──
+async function generatePPTX(data) {
+  // Load pptxgenjs from CDN
+  if (!window.PptxGenJS) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  const pres = new window.PptxGenJS();
+  pres.layout = 'LAYOUT_16x9';
+
+  const NAVY = '0D2B4E';
+  const WHITE = 'FFFFFF';
+  const ACCENT = '2E7CF6';
+  const GRAY = '64748B';
+  const GREEN = '16A34A';
+  const YELLOW = 'D97706';
+
+  // SLIDE 1: Title
+  const s1 = pres.addSlide();
+  s1.background = { color: NAVY };
+  s1.addText('sergek group', { x:0.5, y:0.35, w:9, h:0.3, fontSize:10, color:'7AAEF5', charSpacing:3, fontFace:'Calibri', margin:0 });
+  s1.addText('Процессный офис', { x:0.5, y:0.85, w:9, h:0.7, fontSize:32, color:WHITE, bold:true, fontFace:'Calibri', margin:0 });
+  s1.addText(data.dateLabel, { x:0.5, y:1.55, w:9, h:0.4, fontSize:16, color:'94B8E8', fontFace:'Calibri', margin:0 });
+  s1.addText(data.period, { x:0.5, y:1.95, w:9, h:0.3, fontSize:13, color:'7AAEF5', fontFace:'Calibri', margin:0 });
+  s1.addShape(pres.ShapeType.rect, { x:0.5, y:2.45, w:9, h:0.02, fill:{ color:ACCENT, transparency:40 }, line:{ color:ACCENT, transparency:40 } });
+
+  data.tasks.forEach((task, i) => {
+    s1.addShape(pres.ShapeType.ellipse, { x:0.5, y:2.65+i*0.38, w:0.28, h:0.28, fill:{color:ACCENT}, line:{color:ACCENT} });
+    s1.addText(String(i+1).padStart(2,'0'), { x:0.5, y:2.64+i*0.38, w:0.28, h:0.3, fontSize:9, color:WHITE, bold:true, align:'center', valign:'middle', fontFace:'Calibri', margin:0 });
+    s1.addText(task.name, { x:0.9, y:2.65+i*0.38, w:8.1, h:0.3, fontSize:13, color:'D1E4FF', fontFace:'Calibri', margin:0, valign:'middle' });
+  });
+
+  // TASK SLIDES
+  const dirColors = {
+    'Проекты': {bg:'EDE9FE', txt:'6D28D9'},
+    'IT|AI': {bg:'DBEAFE', txt:'1D4ED8'},
+    'Методология': {bg:'FCE7F3', txt:'9D174D'},
+    'SimBASE': {bg:'FEF3C7', txt:'92400E'}
+  };
+  const stColors = {
+    'Выполнено': {bg:'DCFCE7', txt:GREEN},
+    'В работе': {bg:'FEF3C7', txt:YELLOW},
+    'Не начато': {bg:'F1F5F9', txt:GRAY}
+  };
+
+  for (const task of data.tasks) {
+    const slide = pres.addSlide();
+    slide.background = { color:'FFFFFF' };
+    slide.addShape(pres.ShapeType.rect, { x:0, y:0, w:10, h:1.35, fill:{color:NAVY}, line:{color:NAVY} });
+    slide.addText('Процессный офис  ·  ' + data.period, { x:0.5, y:0.12, w:9, h:0.25, fontSize:9, color:'7AAEF5', charSpacing:1, fontFace:'Calibri', margin:0 });
+    slide.addText(task.name, { x:0.5, y:0.38, w:7.5, h:0.55, fontSize:22, color:WHITE, bold:true, fontFace:'Calibri', margin:0, valign:'middle' });
+
+    const dc = dirColors[task.dir] || {bg:'F1F5F9', txt:'475569'};
+    slide.addShape(pres.ShapeType.roundRect, { x:0.5, y:1.0, w:1.3, h:0.26, fill:{color:dc.bg}, line:{color:dc.bg}, rectRadius:0.04 });
+    slide.addText(task.dir, { x:0.5, y:1.0, w:1.3, h:0.26, fontSize:9, color:dc.txt, bold:true, align:'center', valign:'middle', fontFace:'Calibri', margin:0 });
+
+    const sc = stColors[task.status] || {bg:'F1F5F9', txt:GRAY};
+    slide.addShape(pres.ShapeType.roundRect, { x:1.95, y:1.0, w:1.4, h:0.26, fill:{color:sc.bg}, line:{color:sc.bg}, rectRadius:0.04 });
+    slide.addText(task.status, { x:1.95, y:1.0, w:1.4, h:0.26, fontSize:9, color:sc.txt, bold:true, align:'center', valign:'middle', fontFace:'Calibri', margin:0 });
+
+    const hasComment = task.comment && task.comment.trim();
+    const contentW = hasComment ? 5.8 : 9.2;
+    slide.addText('ЧТО СДЕЛАНО', { x:0.5, y:1.55, w:contentW, h:0.28, fontSize:9, color:ACCENT, bold:true, charSpacing:1.5, fontFace:'Calibri', margin:0 });
+
+    const bullets = (task.bullets || []).filter(Boolean);
+    if (bullets.length) {
+      slide.addText(bullets.map((b, idx) => ({
+        text: b,
+        options: { bullet:true, breakLine: idx < bullets.length-1, fontSize:13, color:'1E293B', fontFace:'Calibri', paraSpaceAfter:4 }
+      })), { x:0.5, y:1.87, w:contentW, h:3.3, valign:'top', fontFace:'Calibri' });
+    }
+
+    if (hasComment) {
+      slide.addShape(pres.ShapeType.roundRect, { x:6.8, y:1.55, w:2.8, h:3.6, fill:{color:'F8FAFC'}, line:{color:'E2E8F0', width:1}, rectRadius:0.1 });
+      slide.addText('КОММЕНТАРИЙ', { x:6.9, y:1.7, w:2.6, h:0.25, fontSize:8, color:GRAY, bold:true, charSpacing:1, fontFace:'Calibri', margin:0 });
+      slide.addText(task.comment, { x:6.9, y:2.0, w:2.6, h:3.0, fontSize:12, color:'334155', valign:'top', fontFace:'Calibri', margin:0 });
+    }
+
+    slide.addText(String(data.tasks.indexOf(task)+2), { x:9.4, y:5.2, w:0.4, h:0.25, fontSize:9, color:GRAY, align:'right', fontFace:'Calibri', margin:0 });
+  }
+
+  // LAST SLIDE: Next steps
+  const ls = pres.addSlide();
+  ls.background = { color:NAVY };
+  ls.addText('sergek group', { x:0.5, y:0.35, w:9, h:0.3, fontSize:10, color:'7AAEF5', charSpacing:3, fontFace:'Calibri', margin:0 });
+  ls.addText('Ближайшие шаги', { x:0.5, y:0.8, w:9, h:0.6, fontSize:28, color:WHITE, bold:true, fontFace:'Calibri', margin:0 });
+  if (data.nextPeriod) ls.addText(data.nextPeriod, { x:0.5, y:1.42, w:9, h:0.3, fontSize:13, color:'7AAEF5', fontFace:'Calibri', margin:0 });
+  ls.addShape(pres.ShapeType.rect, { x:0.5, y:1.82, w:9, h:0.02, fill:{color:ACCENT, transparency:40}, line:{color:ACCENT, transparency:40} });
+
+  const steps = data.nextSteps || [];
+  steps.forEach((step, i) => {
+    ls.addShape(pres.ShapeType.ellipse, { x:0.5, y:2.07+i*0.38, w:0.24, h:0.24, fill:{color:ACCENT}, line:{color:ACCENT} });
+    ls.addText(step, { x:0.85, y:2.05+i*0.38, w:8.6, h:0.3, fontSize:13, color:'D1E4FF', valign:'middle', fontFace:'Calibri', margin:0 });
+  });
+
+  await pres.writeFile({ fileName: `Процессный_офис_${data.dateLabel.replace(/ /g,'_')}.pptx` });
+}
+
+// ── CALENDAR ──
+let calMode='week', calOff=0, calPerson='all';
+
+window.setCalView=mode=>{
+  calMode=mode;calOff=0;
+  document.getElementById('calBtnWeek').classList.toggle('active',mode==='week');
+  document.getElementById('calBtnMonth').classList.toggle('active',mode==='month');
+  renderCalendar();
+};
+window.calNav=d=>{calOff+=d;renderCalendar();};
+
+function renderCalendar(){
+  buildCalPersonFilters();
+  if(calMode==='week') renderCalWeek();
+  else renderCalMonth();
+}
+
+function buildCalPersonFilters(){
+  const people=['all',...C.team.filter(m=>m.type==='active').map(m=>m)];
+  let h='';
+  people.forEach(p=>{
+    if(p==='all'){
+      h+=`<span class="cal-person-chip${calPerson==='all'?' active':''}" style="${calPerson==='all'?'background:var(--navy)':''}" onclick="setCalPerson('all')">Все</span>`;
+    } else {
+      h+=`<span class="cal-person-chip${calPerson===p.name?' active':''}" style="${calPerson===p.name?'background:'+p.color+';color:white':''}" onclick="setCalPerson('${p.name}')">
+        <span class="cal-person-dot" style="background:${p.color}"></span>${p.name}
+      </span>`;
+    }
+  });
+  document.getElementById('calPersonFilters').innerHTML=h;
+}
+window.setCalPerson=name=>{calPerson=name;renderCalendar();};
+
+function getTasksForDay(key){
+  let tasks=C.day[key]||[];
+  if(calPerson!=='all') tasks=tasks.filter(t=>t.owner===calPerson||t.owner.includes(calPerson));
+  return tasks;
+}
+
+function taskColor(t){
+  return{'Выполнено':'var(--green-light)','В работе':'var(--yellow-light)','Частично':'#fef9c3','Не начато':'var(--gray-100)'}[t.status]||'var(--gray-100)';
+}
+function taskTextColor(t){
+  return{'Выполнено':'var(--green)','В работе':'var(--yellow)','Частично':'#854d0e','Не начато':'var(--gray-600)'}[t.status]||'var(--gray-600)';
+}
+
+function taskItem(t, compact=false){
+  const isTransfer=(t.transfers||0)>0;
+  const bg=taskColor(t);const fc=taskTextColor(t);
+  // Find parent name for context
+  const parentWeek = t.parentId ? C.week.find(x=>x.id===t.parentId) : null;
+  const parentMaster = parentWeek && parentWeek.parentId ? C.master.find(x=>x.id===parentWeek.parentId) : null;
+  const parentLabel = parentMaster ? `<span style="opacity:.6;font-size:9px">${parentMaster.main} › </span>` : '';
+  if(compact){
+    return`<div class="cal-month-task" style="background:${bg};color:${fc}">
+      ${isTransfer?'<span title="Перенесено">↩</span>':''}
+      <span class="cal-month-name">${t.main}</span>
+    </div>`;
+  }
+  return`<div class="cal-task-item" style="background:${bg};color:${fc}">
+    ${isTransfer?`<span class="cal-transfer-icon" title="Перенесено ${t.transfers} раз">↩${t.transfers}</span>`:''}
+    <span class="cal-task-name">${parentLabel}${t.main}</span>
+  </div>`;
+}
+
+function renderCalWeek(){
+  const d=new Date();
+  const day=d.getDay()||7;
+  const mon=new Date(d);
+  mon.setDate(d.getDate()-day+1+calOff*7);
+  const days=[];
+  for(let i=0;i<7;i++){
+    const dd=new Date(mon);dd.setDate(mon.getDate()+i);
+    days.push(dd);
+  }
+  const fmt=x=>x.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  document.getElementById('calLabel').textContent=fmt(days[0])+' – '+fmt(days[6]);
+  const dayNames=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const todayStr=todayK();
+  let h=`<div class="cal-week-header">${dayNames.map(n=>`<div class="cal-day-hdr">${n}</div>`).join('')}</div>`;
+  h+='<div class="cal-week">';
+  days.forEach((dd,i)=>{
+    const key=toKey(dd);
+    const tasks=getTasksForDay(key);
+    const isToday=key===todayStr;
+    const isWknd=i>=5;
+    const MAX=4;
+    const shown=tasks.slice(0,MAX);
+    const more=tasks.length-MAX;
+    h+=`<div class="cal-day${isToday?' today':''}${isWknd?' empty':''}">
+      <div class="cal-day-num${isToday?' today-num':''}">
+        <span>${dd.getDate()}</span>
+        ${tasks.length?`<span style="font-size:10px;background:var(--accent-light);color:var(--accent);padding:1px 5px;border-radius:8px">${tasks.length}</span>`:''}
+      </div>
+      ${shown.map(t=>taskItem(t)).join('')}
+      ${more>0?`<div class="cal-more" onclick="openDayDetail('${key}')">+${more} ещё...</div>`:''}
+      ${tasks.length===0?`<div style="font-size:11px;color:var(--gray-200);text-align:center;margin-top:20px">—</div>`:''}
+    </div>`;
+  });
+  h+='</div>';
+  document.getElementById('calContainer').innerHTML=h;
+}
+
+function renderCalMonth(){
+  const d=new Date();
+  const first=new Date(d.getFullYear(),d.getMonth()+calOff,1);
+  const last=new Date(first.getFullYear(),first.getMonth()+1,0);
+  const monthName=first.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+  document.getElementById('calLabel').textContent=monthName;
+  const startDay=first.getDay()||7;
+  const todayStr=todayK();
+  let h='<div class="cal-week-header">';
+  ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(n=>h+=`<div class="cal-day-hdr">${n}</div>`);
+  h+='</div><div class="cal-month">';
+  // Empty cells before first day
+  for(let i=1;i<startDay;i++){
+    h+=`<div class="cal-month-day other-month"></div>`;
+  }
+  for(let day=1;day<=last.getDate();day++){
+    const dd=new Date(first.getFullYear(),first.getMonth(),day);
+    const key=toKey(dd);
+    const tasks=getTasksForDay(key);
+    const isToday=key===todayStr;
+    const MAX=3;
+    const shown=tasks.slice(0,MAX);
+    const more=tasks.length-MAX;
+    h+=`<div class="cal-month-day${isToday?' today':''}">
+      <div class="cal-month-day-num${isToday?' today-num':''}">${day}${tasks.length?` <span style="font-size:9px;color:var(--accent)">(${tasks.length})</span>`:''}</div>
+      ${shown.map(t=>taskItem(t,true)).join('')}
+      ${more>0?`<div class="cal-more" onclick="openDayDetail('${key}')">+${more}</div>`:''}
+    </div>`;
+  }
+  // Fill remaining cells
+  const lastDay=last.getDay()||7;
+  for(let i=lastDay;i<7;i++) h+=`<div class="cal-month-day other-month"></div>`;
+  h+='</div>';
+  document.getElementById('calContainer').innerHTML=h;
+}
+
+window.openDayDetail=(key)=>{
+  const tasks=getTasksForDay(key);
+  if(!tasks.length){toast('Нет задач за этот день');return;}
+  // Jump to day view
+  const today=new Date(todayK()+'T12:00:00');
+  const target=new Date(key+'T12:00:00');
+  dayOff=Math.round((target-today)/86400000);
+  switchView('day');
+};
+
+// ── INIT ──
+document.getElementById('hdrDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+startListeners();
+</script>
+</body>
+</html>
